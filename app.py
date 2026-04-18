@@ -730,9 +730,18 @@ try:
                 with c2:
                     bar_df = seg_counts.reset_index()
                     bar_df.columns = ['Segment', 'Count']
-                    fig_bar = px.bar(bar_df, x='Count', y='Segment', orientation='h',
-                                    color='Segment', color_discrete_sequence=COLORS)
-                    fig_bar.update_traces(marker_line_width=0)
+                    fig_bar = go.Figure(
+                        go.Bar(
+                            x=bar_df['Count'],
+                            y=bar_df['Segment'],
+                            orientation='h',
+                            marker=dict(
+                                color=[SEG_COLORS.get(segment, COLORS[0]) for segment in bar_df['Segment']],
+                                line=dict(width=0)
+                            ),
+                            hovertemplate="<b>%{y}</b><br>Customers: %{x}<extra></extra>",
+                        )
+                    )
                     fig_bar = light_fig(fig_bar, 310)
                     fig_bar.update_layout(showlegend=False,
                                          **fig_title("Customer Count per Segment"),
