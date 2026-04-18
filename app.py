@@ -764,9 +764,22 @@ try:
                     st.markdown('</div>', unsafe_allow_html=True)
 
                 with c4:
-                    fig_age = px.box(df, x='Segment', y='Age', color='Segment',
-                                    color_discrete_sequence=COLORS, points='outliers')
-                    fig_age.update_traces(marker_size=4)
+                    fig_age = go.Figure()
+                    for segment in bar_df['Segment']:
+                        segment_df = df[df['Segment'] == segment]
+                        fig_age.add_trace(
+                            go.Box(
+                                x=segment_df['Segment'],
+                                y=segment_df['Age'],
+                                name=segment,
+                                marker=dict(color=SEG_COLORS.get(segment, COLORS[0]), size=4),
+                                line=dict(color=SEG_COLORS.get(segment, COLORS[0])),
+                                fillcolor=SEG_COLORS.get(segment, COLORS[0]),
+                                boxpoints='outliers',
+                                showlegend=False,
+                                hovertemplate="<b>%{x}</b><br>Age: %{y}<extra></extra>",
+                            )
+                        )
                     fig_age = light_fig(fig_age, 320)
                     fig_age.update_layout(showlegend=False,
                                           **fig_title("Age Distribution by Segment"),
@@ -776,9 +789,24 @@ try:
                     st.markdown('</div>', unsafe_allow_html=True)
 
                 # Row 3: Violin full-width
-                fig_vio = px.violin(df, x='Segment', y='Annual Income (k$)',
-                                    color='Segment', box=True,
-                                    color_discrete_sequence=COLORS)
+                fig_vio = go.Figure()
+                for segment in bar_df['Segment']:
+                    segment_df = df[df['Segment'] == segment]
+                    fig_vio.add_trace(
+                        go.Violin(
+                            x=segment_df['Segment'],
+                            y=segment_df['Annual Income (k$)'],
+                            name=segment,
+                            line=dict(color=SEG_COLORS.get(segment, COLORS[0])),
+                            fillcolor=SEG_COLORS.get(segment, COLORS[0]),
+                            opacity=0.9,
+                            box=dict(visible=True),
+                            meanline=dict(visible=True),
+                            points=False,
+                            showlegend=False,
+                            hovertemplate="<b>%{x}</b><br>Income: %{y}<extra></extra>",
+                        )
+                    )
                 fig_vio = light_fig(fig_vio, 310)
                 fig_vio.update_layout(showlegend=False,
                                       **fig_title("Income Distribution by Segment", "Violin + interquartile box"),
@@ -881,13 +909,24 @@ try:
 
             with hc2:
                 grp = hist_df.groupby(['segment','source']).size().reset_index(name='count')
-                fig_hsrc = px.bar(grp, x='segment', y='count', color='source',
-                                  color_discrete_map={'single':'#2D6A4F','batch':'#52B788'},
-                                  barmode='group')
-                fig_hsrc.update_traces(marker_line_width=0)
+                fig_hsrc = go.Figure()
+                source_colors = {'single': '#2D6A4F', 'batch': '#52B788'}
+                for source in ['single', 'batch']:
+                    source_df = grp[grp['source'] == source]
+                    if source_df.empty:
+                        continue
+                    fig_hsrc.add_trace(
+                        go.Bar(
+                            x=source_df['segment'],
+                            y=source_df['count'],
+                            name=source.title(),
+                            marker=dict(color=source_colors[source], line=dict(width=0)),
+                            hovertemplate="<b>%{x}</b><br>Source: " + source.title() + "<br>Count: %{y}<extra></extra>",
+                        )
+                    )
                 fig_hsrc = light_fig(fig_hsrc, 290)
                 fig_hsrc.update_layout(**fig_title("Single vs Batch by Segment"),
-                                       xaxis_tickangle=-18, legend_title_text="Source")
+                                       xaxis_tickangle=-18, legend_title_text="Source", barmode='group')
                 st.markdown('<div class="chart-wrap">', unsafe_allow_html=True)
                 st.plotly_chart(fig_hsrc, use_container_width=True)
                 st.markdown('</div>', unsafe_allow_html=True)
